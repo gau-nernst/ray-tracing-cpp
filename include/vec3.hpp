@@ -53,4 +53,14 @@ std::ostream &operator<<(std::ostream &out, const Vec3 &v) {
   return out << "Vec3(" << v.x << ", " << v.y << ", " << v.z << ')';
 }
 
+class Ray final {
+public:
+  Vec3 origin;
+  Vec3 direction;
+
+  Ray(const Vec3 &origin, const Vec3 &direction) : origin(origin), direction(direction) {}
+
+  Vec3 at(float t) const { return origin + direction * t; }
+};
+
 #endif // VEC3_H
