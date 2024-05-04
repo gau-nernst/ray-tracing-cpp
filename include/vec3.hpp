@@ -10,10 +10,13 @@ public:
   float y;
   float z;
 
+  Vec3() {}
   Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
 
   Vec3 operator-() const { return Vec3(-x, -y, -z); }
   Vec3 inv() const { return Vec3(1.0f / x, 1.0f / y, 1.0f / z); }
+  static Vec3 zero() { return Vec3(0, 0, 0); }
+  static Vec3 one() { return Vec3(1, 1, 1); }
 
   float dot(const Vec3 &other) const;
   Vec3 cross(const Vec3 &other) const;
@@ -58,6 +61,7 @@ public:
   Vec3 origin;
   Vec3 direction;
 
+  Ray() {}
   Ray(const Vec3 &origin, const Vec3 &direction) : origin(origin), direction(direction) {}
 
   Vec3 at(float t) const { return origin + direction * t; }
