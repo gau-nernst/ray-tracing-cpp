@@ -1,4 +1,4 @@
-CXXFLAGS += -std=c++11 -Wall -Ofast -MMD -MP -Iinclude -Istb -Iimgui -Iimgui/backends
+CXXFLAGS += -std=c++11 -Wall -Ofast -MMD -MP -Istb -Iimgui -Iimgui/backends
 LDLIBS += -lm
 
 ifdef ENABLE_OPENMP
