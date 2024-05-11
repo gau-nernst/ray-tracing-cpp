@@ -18,7 +18,9 @@
 
 uint8_t float_to_uint8(float x) { return static_cast<uint8_t>(std::min(std::max(x * 255.9999f, 0.0f), 255.0f)); }
 
-void render(const Camera &cam, int n_rays, std::mt19937 &gen, uint8_t *img_buf) {
+static std::mt19937 GEN(std::random_device{}());
+
+void render(const Camera &cam, int n_rays, uint8_t *img_buf) {
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
   Vec3 color1(1, 0, 0);
@@ -31,8 +33,8 @@ void render(const Camera &cam, int n_rays, std::mt19937 &gen, uint8_t *img_buf) 
 
       for (int n = 0; n < n_rays; n++) {
         // square sampling
-        float u = static_cast<float>(i) + dist(gen);
-        float v = static_cast<float>(j) + dist(gen);
+        float u = static_cast<float>(i) + dist(GEN);
+        float v = static_cast<float>(j) + dist(GEN);
         Ray ray = cam.pixel_to_ray(u, v);
 
         Vec3 local_color;
@@ -53,6 +55,9 @@ void render(const Camera &cam, int n_rays, std::mt19937 &gen, uint8_t *img_buf) 
 }
 
 int main() {
+  int img_width = 1280;
+  int img_height = 720;
+
   // setup OpenGL
   if (!glfwInit())
     return 1;
@@ -66,7 +71,7 @@ int main() {
 #endif
 
   // Create window with graphics context
-  GLFWwindow *window = glfwCreateWindow(1280, 720, "Ray tracing C++", nullptr, nullptr);
+  GLFWwindow *window = glfwCreateWindow(img_width, img_height, "Ray tracing C++", nullptr, nullptr);
   if (window == nullptr)
     return 1;
   glfwMakeContextCurrent(window);
@@ -87,17 +92,27 @@ int main() {
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init(glsl_version);
 
-  // ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-  Camera cam(400, 300);
+  Camera cam(img_width / 2, img_height / 2);
   int n_rays = 4;
 
-  std::random_device rd;
-  std::mt19937 gen(rd());
-
   std::vector<uint8_t> img_buf(cam.img_width * cam.img_height * 3);
-  render(cam, n_rays, gen, img_buf.data());
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, (void *)img_buf.data());
+  render(cam, n_rays, img_buf.data());
+
+  // create texture to display results
+  GLuint texture;
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, cam.img_width, cam.img_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+  // copy data over to texture
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cam.img_width, cam.img_height, GL_RGB, GL_UNSIGNED_BYTE,
+                  (void *)img_buf.data());
+
+  GLuint readFboId = 0;
+  glGenFramebuffers(1, &readFboId);
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, readFboId);
+  glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
@@ -105,17 +120,20 @@ int main() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    {
-      ImGui::Begin("Hello, world!");
-      ImGui::End();
-    }
+    // {
+    //   ImGui::Begin("Hello, world!");
+    //   ImGui::End();
+    // }
 
     ImGui::Render();
     int display_w, display_h;
     glfwGetFramebufferSize(window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
-    glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, readFboId);
+    glBlitFramebuffer(0, 0, cam.img_width, cam.img_height, 0, 0, display_w, display_h, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
     glfwSwapBuffers(window);
   }
