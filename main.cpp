@@ -94,19 +94,13 @@ int main() {
 
   Camera cam(img_width / 2, img_height / 2);
   int n_rays = 4;
-
   std::vector<uint8_t> img_buf(cam.img_width * cam.img_height * 3);
-  render(cam, n_rays, img_buf.data());
 
   // create texture to display results
   GLuint texture;
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, cam.img_width, cam.img_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-
-  // copy data over to texture
-  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cam.img_width, cam.img_height, GL_RGB, GL_UNSIGNED_BYTE,
-                  (void *)img_buf.data());
 
   GLuint readFboId = 0;
   glGenFramebuffers(1, &readFboId);
@@ -120,16 +114,16 @@ int main() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    // {
-    //   ImGui::Begin("Hello, world!");
-    //   ImGui::End();
-    // }
-
     ImGui::Render();
     int display_w, display_h;
     glfwGetFramebufferSize(window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    // copy data over to texture
+    render(cam, n_rays, img_buf.data());
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cam.img_width, cam.img_height, GL_RGB, GL_UNSIGNED_BYTE,
+                    (void *)img_buf.data());
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, readFboId);
     glBlitFramebuffer(0, 0, cam.img_width, cam.img_height, 0, 0, display_w, display_h, GL_COLOR_BUFFER_BIT, GL_LINEAR);
