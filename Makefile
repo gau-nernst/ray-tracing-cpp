@@ -44,11 +44,8 @@ obj/%.o: imgui/backends/%.cpp
 main: $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LDLIBS) $(LDFLAGS)
 
-launch%: main
-	./main $(patsubst launch%,%,$@)
-
 format:
-	clang-format -i src/*.cpp include/*.hpp
+	clang-format -i *.cpp include/*.hpp
 
 clean:
 	rm $(OBJECTS) $(DEPENDS)
