@@ -1,4 +1,6 @@
-CXXFLAGS += -std=c++11 -Wall -Ofast -MMD -MP -Istb -Iimgui -Iimgui/backends
+CXXFLAGS += -std=c++11 -Wall -Ofast -MMD -MP
+CXXFLAGS += -Istb
+
 LDLIBS += -lm
 
 ifdef ENABLE_OPENMP
@@ -8,10 +10,16 @@ endif
 SOURCES = main.cpp
 
 # imgui stuff
+CXXFLAGS += -Iimgui -Iimgui/backends
 SOURCES += $(addprefix imgui/, imgui.cpp imgui_demo.cpp imgui_draw.cpp imgui_tables.cpp imgui_widgets.cpp)
 SOURCES += $(addprefix imgui/backends/, imgui_impl_glfw.cpp imgui_impl_opengl3.cpp)
 
-OBJECTS = $(patsubst %.cpp, obj/%.o, $(notdir $(SOURCES)))
+# glad
+CFLAGS += -Iglad/include
+CXXFLAGS += -Iglad/include
+SOURCES += glad/src/glad.c
+
+OBJECTS = $(addsuffix .o, $(basename $(SOURCES)))
 DEPENDS = $(patsubst %.o, %.d, $(OBJECTS))
 
 -include $(DEPENDS)  # re-compile when headers change
@@ -30,22 +38,17 @@ ifeq ($(UNAME_S), Darwin)
 	CXXFLAGS += -I/usr/local/include -I/opt/local/include -I/opt/homebrew/include
 endif
 
-$(shell mkdir -p obj)
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-obj/%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-obj/%.o: imgui/%.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-obj/%.o: imgui/backends/%.cpp
+%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 main: $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LDLIBS) $(LDFLAGS)
 
 format:
-	clang-format -i *.cpp include/*.hpp
+	clang-format -i *.cpp *.hpp
 
 clean:
 	rm $(OBJECTS) $(DEPENDS)

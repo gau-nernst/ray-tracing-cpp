@@ -1,6 +1,10 @@
 #ifndef TIFF_H
 #define TIFF_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdio.h>
 
@@ -52,5 +56,9 @@ int write_tiff(FILE *f, int width, int height, int n_channels, uint8_t *buffer) 
   fwrite(buffer, 1, width * height * n_channels, f);
   return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // TIFF_H
