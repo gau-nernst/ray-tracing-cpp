@@ -17,7 +17,7 @@ public:
         img_width(img_width),   //
         img_height(img_height) {}
 
-  Ray pixel_to_ray(float u, float v) {
+  Ray pixel_to_ray(float u, float v) const {
     // change pixel origin to image's center. flip vertical axis (from top-bottom to bottom-top).
     // scale to camera coordinates.
     float scale = viewport_width / img_width;
