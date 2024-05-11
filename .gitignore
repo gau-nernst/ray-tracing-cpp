@@ -1,3 +1,6 @@
 main
 *.o
 *.d
+*.a
+*.zip
+glfw*/
